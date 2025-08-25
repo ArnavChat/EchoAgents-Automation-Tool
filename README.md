@@ -31,13 +31,14 @@ flowchart LR
   TL --> FE
   ORCH --> FE
 ```
+
 ````
 
 ---
 
 ## 📂 Repository Structure
 
-```
+```text
 CalenderHandlerModule/
   scripts/                 # Launch scripts (PowerShell)
   services/
