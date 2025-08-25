@@ -2,6 +2,7 @@ fastapi
 uvicorn
 httpx
 python-dateutil
+python-dotenv
 google-auth
 google-auth-oauthlib
 google-api-python-client

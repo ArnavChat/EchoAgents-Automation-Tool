@@ -2,7 +2,7 @@
 import os
 import re
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 from dateutil import parser as date_parser
 try:
@@ -79,12 +79,14 @@ def parse_datetime(text: str) -> Optional[datetime]:
 def extract_entities(text: str) -> Dict[str, Any]:
 	"""Extract lightweight entities.
 
-	Currently supported:
+	Adds basic email composition hints:
 	- emails: list[str]
-	- datetime: first parsed datetime (if any)
-	- datetime_text: raw text when datetime not parsed
-	- action_verbs: verbs indicating intent modifiers (cancel, reschedule, move, update)
-	- summary_hints: list of capitalized words (could help match existing events)
+	- datetime / datetime_text (meeting scheduling)
+	- action_verbs
+	- summary_hints
+	- subject (heuristic: 'subject: ...' line)
+	- body (if 'body:' marker) else remainder after subject line
+	- style (formal, casual, concise, bullet/bullet_summary)
 	"""
 	emails = extract_emails(text)
 	dt = parse_datetime(text)
@@ -93,19 +95,88 @@ def extract_entities(text: str) -> Dict[str, Any]:
 	for token in ["cancel", "delete", "remove", "reschedule", "move", "update", "shift"]:
 		if token in lower:
 			action_verbs.append(token)
-	# crude summary hints: capitalized words excluding sentence starts common pronouns
 	summary_hints = [w.strip(",. ") for w in re.findall(r"\b[A-Z][a-zA-Z0-9]+\b", text or "") if w.lower() not in {"i","we","the"}]
+
+	subject, body = _extract_email_subject_body(text or "")
+	styles = _extract_styles(text or "")
+	style = styles[0] if styles else None
 	return {
 		"emails": emails,
 		"datetime": dt,
 		"datetime_text": text if dt is None else None,
 		"action_verbs": action_verbs,
 		"summary_hints": summary_hints,
+		"subject": subject,
+		"body": body,
+		"style": style,
+		"styles": styles,
 	}
+
+STYLE_KEYWORDS = {
+	"formal": ["formal", "professional"],
+	"casual": ["casual", "friendly", "informal"],
+	"concise": ["concise", "short"],
+	"bullet_summary": ["bullet", "bullets", "summary points", "bullet summary", "bullet_summary"],
+}
+
+def _extract_styles(text: str) -> List[str]:
+	lower = text.lower()
+	found: List[str] = []
+	for style_key, kws in STYLE_KEYWORDS.items():
+		for kw in kws:
+			if kw in lower and style_key not in found:
+				found.append(style_key)
+	return found
+
+def _extract_style(text: str) -> Optional[str]:  # backward compatibility
+	styles = _extract_styles(text)
+	return styles[0] if styles else None
+
+def _extract_email_subject_body(text: str) -> Tuple[Optional[str], Optional[str]]:
+	# Look for subject line OR inline 'subject:' fragment.
+	lines = text.splitlines()
+	subject = None
+	body_lines: List[str] = []
+	for i, line in enumerate(lines):
+		if re.match(r"^\s*(subject|sub)\s*:\s*", line, flags=re.IGNORECASE):
+			subject = re.sub(r"^\s*(subject|sub)\s*:\s*", "", line, flags=re.IGNORECASE).strip()
+			body_lines = lines[i+1:]
+			break
+	# Inline pattern e.g. "Send email to X subject: Foo Bar Please ..."
+	if subject is None:
+		m = re.search(r"subject:\s*([^\.\n]+)", text, flags=re.IGNORECASE)
+		if m:
+			subject = m.group(1).strip()
+			# If inline subject accidentally consumed a ' body:' marker, split it out.
+			lower_subj = subject.lower()
+			if ' body:' in lower_subj:
+				parts = re.split(r"\s+body:\s*", subject, flags=re.IGNORECASE, maxsplit=1)
+				if len(parts) == 2:
+					subject, inline_body_fragment = parts[0].strip(), parts[1].strip()
+					body_lines = [inline_body_fragment]
+			# body is everything after the captured subject phrase (remaining text)
+			post = text[m.end():]
+			if post:
+				post = post.strip()
+				if post:
+					body_lines.append(post)
+	if subject is None:
+		return None, None
+	body_raw = "\n".join(body_lines).strip() if body_lines else None
+	if body_raw:
+		# Remove leading punctuation artifacts like starting '.' or '-' after split
+		body_raw = re.sub(r"^[\s\.-]+", "", body_raw)
+		# Remove any leading 'body:' label if present
+		body_raw = re.sub(r"^body:\s*", "", body_raw, flags=re.IGNORECASE)
+		# Remove trailing style directives "make it formal/casual/..."
+		body_raw = re.sub(r"make it (formal|casual|concise|bullet( summary)?)\.?$", "", body_raw, flags=re.IGNORECASE).strip() or None
+	return subject, body_raw
 
 
 def classify_intent(text: str) -> str:
 	t = (text or "").lower()
+	if any(k in t for k in ["email", "send email", "draft email", "compose email", "mail to"]):
+		return "send_email"
 	if any(k in t for k in ["cancel", "delete", "remove"]):
 		return "cancel_meeting"
 	if any(k in t for k in ["reschedule", "move", "shift", "update", "change time"]):

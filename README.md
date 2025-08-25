@@ -97,7 +97,8 @@ Place your Google OAuth `credentials.json` under `CalenderHandlerModule/google/`
 
 ## ▶️ Running Services
 
-### Run All Services
+### Backend
+#### Run All Service 
 
 ```powershell
 .\venv311\Scripts\Activate.ps1
@@ -112,6 +113,15 @@ Launches 4 services (msg-proxy, orchestrator, timeline, voice-agent).
 .\venv311\Scripts\Activate.ps1
 .\CalenderHandlerModule\scripts\run-orchestrator.ps1 -Port 8002
 ```
+
+### Frontend
+```powershell
+.\venv311\Scripts\Activate.ps1
+cd .\frontend\
+npm i
+npm run start
+```
+
 
 ### Verify Health
 

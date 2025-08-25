@@ -1,12 +1,21 @@
 # services/msg-proxy/app.py
 import os
 from fastapi import FastAPI, Request, HTTPException, Body
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 import httpx
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # tighten later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 TIMELINE_URL = os.getenv("TIMELINE_URL", "http://localhost:8000/timeline/events")
 ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://localhost:8002/handle-event")
@@ -147,3 +156,7 @@ def normalize_message(source: str, payload: dict) -> NormalizedMessage:
         attachments=attachments,
         timestamp=timestamp,
     )
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "service": "msg-proxy"}
