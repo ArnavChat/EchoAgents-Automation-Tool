@@ -2,6 +2,11 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 import tempfile
 import os
+try:
+	from dotenv import load_dotenv  # type: ignore
+	load_dotenv(override=False)
+except Exception:
+	pass
 import re
 from stt import model as whisper_model
 from tts import speak_text
@@ -112,7 +117,13 @@ async def voice_command(file: UploadFile = File(...), user_id: str = Form("voice
 		"timestamp": datetime.utcnow().isoformat()
 	}
 
-	msg_proxy_url = os.getenv("MSG_PROXY_WEBHOOK_URL", "http://localhost:8001/webhook/voice")
+	msg_proxy_url = os.getenv(
+		"MSG_PROXY_WEBHOOK_URL",
+		(
+			os.getenv("MSG_PROXY_URL", os.getenv("MSG_PROXY_BASE_URL", "http://localhost:8001").rstrip("/"))
+			+ os.getenv("MSG_PROXY_VOICE_PATH", "/webhook/voice")
+		),
+	)
 
 	# Forward to msg-proxy and return its details
 	async with httpx.AsyncClient(timeout=15) as client:
@@ -145,7 +156,13 @@ async def voice_forward(payload: dict):
 		"attachments": [],
 		"timestamp": datetime.utcnow().isoformat()
 	}
-	msg_proxy_url = os.getenv("MSG_PROXY_WEBHOOK_URL", "http://localhost:8001/webhook/voice")
+	msg_proxy_url = os.getenv(
+		"MSG_PROXY_WEBHOOK_URL",
+		(
+			os.getenv("MSG_PROXY_URL", os.getenv("MSG_PROXY_BASE_URL", "http://localhost:8001").rstrip("/"))
+			+ os.getenv("MSG_PROXY_VOICE_PATH", "/webhook/voice")
+		),
+	)
 	async with httpx.AsyncClient(timeout=15) as client:
 		resp = await client.post(msg_proxy_url, json=forward_payload)
 		try:

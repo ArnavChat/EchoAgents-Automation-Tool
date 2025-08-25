@@ -1,5 +1,10 @@
 # services/msg-proxy/app.py
 import os
+try:
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv(override=False)
+except Exception:
+    pass
 from fastapi import FastAPI, Request, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -17,8 +22,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-TIMELINE_URL = os.getenv("TIMELINE_URL", "http://localhost:8000/timeline/events")
-ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://localhost:8002/handle-event")
+"""Configuration
+
+Environment variables consumed (with fallbacks):
+  TIMELINE_URL_BASE  (default http://localhost:8000)
+  ORCHESTRATOR_URL_BASE (default http://localhost:8002)
+  TIMELINE_EVENTS_PATH (default /timeline/events)
+  ORCHESTRATOR_HANDLE_PATH (default /handle-event)
+Backward compatibility: If TIMELINE_URL / ORCHESTRATOR_URL are provided fully qualified, they are used directly.
+"""
+
+_timeline_full = os.getenv("TIMELINE_URL")
+_orchestrator_full = os.getenv("ORCHESTRATOR_URL")
+if _timeline_full:
+    TIMELINE_URL = _timeline_full
+else:
+    TIMELINE_URL = (
+        os.getenv("TIMELINE_URL_BASE", os.getenv("TIMELINE_BASE_URL", "http://localhost:8000").rstrip("/"))
+        + os.getenv("TIMELINE_EVENTS_PATH", "/timeline/events")
+    )
+if _orchestrator_full:
+    ORCHESTRATOR_URL = _orchestrator_full
+else:
+    ORCHESTRATOR_URL = (
+        os.getenv("ORCHESTRATOR_URL_BASE", "http://localhost:8002").rstrip("/")
+        + os.getenv("ORCHESTRATOR_HANDLE_PATH", "/handle-event")
+    )
 
 class NormalizedMessage(BaseModel):
     source: str

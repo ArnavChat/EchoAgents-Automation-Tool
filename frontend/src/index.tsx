@@ -118,6 +118,17 @@ const VoiceConsole: React.FC = () => {
     log("Stopped recording");
   }
 
+  // Service endpoints (allow override via build-time env variables)
+  const VOICE_AGENT_BASE = (
+    process.env.VOICE_AGENT_URL || "http://localhost:8003"
+  ).replace(/\/$/, "");
+  const MSG_PROXY_BASE = (
+    process.env.MSG_PROXY_URL || "http://localhost:8001"
+  ).replace(/\/$/, "");
+  const ORCHESTRATOR_BASE = (
+    process.env.ORCHESTRATOR_URL || "http://localhost:8002"
+  ).replace(/\/$/, "");
+
   async function transcribeOnly() {
     if (!audioBlob) return;
     setInFlight(true);
@@ -130,7 +141,7 @@ const VoiceConsole: React.FC = () => {
       const form = new FormData();
       form.append("file", audioBlob, "input.webm");
       form.append("user_id", "web_client");
-      const resp = await fetch("http://localhost:8003/voice/command", {
+      const resp = await fetch(`${VOICE_AGENT_BASE}/voice/command`, {
         method: "POST",
         body: form,
       });
@@ -157,7 +168,7 @@ const VoiceConsole: React.FC = () => {
     setInFlight(true);
     log("Forwarding transcript to orchestrator");
     try {
-      const resp = await fetch("http://localhost:8003/voice/forward", {
+      const resp = await fetch(`${VOICE_AGENT_BASE}/voice/forward`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: transcript, user_id: "web_client" }),
@@ -187,7 +198,7 @@ const VoiceConsole: React.FC = () => {
         attachments: [],
         timestamp: new Date().toISOString(),
       };
-      const resp = await fetch("http://localhost:8001/webhook/voice", {
+      const resp = await fetch(`${MSG_PROXY_BASE}/webhook/voice`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -214,7 +225,7 @@ const VoiceConsole: React.FC = () => {
         attachments: [],
         timestamp: new Date().toISOString(),
       };
-      const resp = await fetch("http://localhost:8001/webhook/voice", {
+      const resp = await fetch(`${MSG_PROXY_BASE}/webhook/voice`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -236,7 +247,7 @@ const VoiceConsole: React.FC = () => {
     if (!pendingEmail) return;
     setInFlight(true);
     try {
-      const resp = await fetch("http://localhost:8002/email/style", {
+      const resp = await fetch(`${ORCHESTRATOR_BASE}/email/style`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ style: draftStyle }),

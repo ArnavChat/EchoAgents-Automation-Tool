@@ -1,5 +1,12 @@
 # services/timeline/main.py
 import os
+try:
+    from dotenv import load_dotenv, find_dotenv  # type: ignore
+    _env_path = find_dotenv()
+    if _env_path:
+        load_dotenv(_env_path, override=False)
+except Exception:
+    pass  # dotenv optional
 from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -11,7 +18,11 @@ from sqlalchemy.orm import sessionmaker, Session
 # ========================
 # Database Configuration
 # ========================
-DATABASE_URL="postgresql://echoagent:echoagents@localhost:5432/echoagents"
+# Allow database URL override via env (required for production). Fall back to local dev.
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://echoagent:echoagents@localhost:5432/echoagents",
+)
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

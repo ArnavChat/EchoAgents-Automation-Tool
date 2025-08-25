@@ -9,6 +9,27 @@ $ErrorActionPreference = 'Stop'
 
 Write-Host "Starting all services..."
 
+# Load root .env if present (basic parser: KEY=VALUE, ignores comments)
+$rootEnv = Join-Path (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path '.env'
+if (Test-Path $rootEnv) {
+    Write-Host "Loading environment variables from $rootEnv" -ForegroundColor Cyan
+    Get-Content $rootEnv | ForEach-Object {
+        if ($_ -match '^[#;]') { return }
+        if ($_ -match '^\s*$') { return }
+        if ($_ -match '^(?<k>[A-Za-z_][A-Za-z0-9_]*)=(?<v>.*)$') {
+            $k = $Matches.k
+            $v = $Matches.v.Trim()
+            # Remove surrounding quotes if present
+            if ($v.StartsWith('"') -and $v.EndsWith('"')) { $v = $v.Substring(1, $v.Length - 2) }
+            if ($v.StartsWith("'") -and $v.EndsWith("'")) { $v = $v.Substring(1, $v.Length - 2) }
+            # Only set if not already defined in current environment
+            if (-not (Test-Path Env:$k)) {
+                Set-Item -Path Env:$k -Value $v
+            }
+        }
+    }
+}
+
 function Start-ServiceProcess {
     param (
         [string]$Name,
@@ -79,12 +100,12 @@ Start-ServiceProcess -Name 'orchestrator' `
         MSG_PROXY_BASE_URL = "http://localhost:$MsgProxyPort"
     })
 
-# timeline
+# timeline (do not override DATABASE_URL if user already configured in .env; allow explicit env passthrough)
+$timelineEnv = @{}
+if ($env:DATABASE_URL) { $timelineEnv.DATABASE_URL = $env:DATABASE_URL }
 Start-ServiceProcess -Name 'timeline' `
-  -WorkingDir (Resolve-Path "$scriptRoot\..\services\timeline").Path `
-  -Command (Build-RunCmd -Module 'timeline' -Entry 'main:app' -Port $TimelinePort -ExtraEnv @{
-        DATABASE_URL = "postgresql://echo:echo_pass@localhost:5432/echoagents"
-    })
+    -WorkingDir (Resolve-Path "$scriptRoot\..\services\timeline").Path `
+    -Command (Build-RunCmd -Module 'timeline' -Entry 'main:app' -Port $TimelinePort -ExtraEnv $timelineEnv)
 
 # voice-agent
 Start-ServiceProcess -Name 'voice-agent' `

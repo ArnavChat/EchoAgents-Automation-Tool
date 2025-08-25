@@ -7,12 +7,17 @@ Environment variables:
 """
 
 import os
+try:
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv(override=False)
+except Exception:
+    pass
 import httpx
 import asyncio
 import logging
 
-BASE_URL_TIMELINE = os.getenv("TIMELINE_BASE_URL", "http://localhost:8000")
-BASE_URL_MSG_PROXY = os.getenv("MSG_PROXY_BASE_URL", "http://localhost:8001")
+BASE_URL_TIMELINE = os.getenv("TIMELINE_URL", os.getenv("TIMELINE_BASE_URL", "http://localhost:8000")).rstrip("/")
+BASE_URL_MSG_PROXY = os.getenv("MSG_PROXY_URL", os.getenv("MSG_PROXY_BASE_URL", "http://localhost:8001")).rstrip("/")
 
 
 class TimelineClient:

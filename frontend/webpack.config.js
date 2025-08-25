@@ -1,6 +1,7 @@
 const path = require("path");
+const webpack = require("webpack");
 
-module.exports = {
+module.exports = (env) => ({
   entry: "./src/index.tsx",
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -18,8 +19,21 @@ module.exports = {
   },
   devServer: {
     static: path.join(__dirname, "public"),
-    port: 5173,
+    port: Number(process.env.FRONTEND_DEV_PORT || 5173),
     hot: true,
     historyApiFallback: true,
   },
-};
+  plugins: [
+    new webpack.DefinePlugin({
+      "process.env.VOICE_AGENT_URL": JSON.stringify(
+        process.env.VOICE_AGENT_URL || ""
+      ),
+      "process.env.MSG_PROXY_URL": JSON.stringify(
+        process.env.MSG_PROXY_URL || ""
+      ),
+      "process.env.ORCHESTRATOR_URL": JSON.stringify(
+        process.env.ORCHESTRATOR_URL || ""
+      ),
+    }),
+  ],
+});
