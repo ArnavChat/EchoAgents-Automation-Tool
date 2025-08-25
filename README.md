@@ -1,223 +1,222 @@
-# EchoAgents Project Documentation
+````markdown
+# 🚀 EchoAgents Project
 
-## Overview
+> **Voice-enabled scheduling & messaging system** powered by modular microservices.  
+> It transcribes voice, extracts intent/entities, creates Google Calendar events, and logs activity for observability.
 
-EchoAgents is a modular, voice-enabled scheduling and messaging system composed of multiple microservices. It transcribes voice input, normalizes messages, extracts intent and entities, schedules calendar events (Google Calendar), and logs actions to a timeline for observability.
+---
 
-Core capabilities:
+## ✨ Features
 
-- Voice capture (STT) and optional TTS response.
-- Message normalization across sources (voice, potential future chat/email hooks).
-- NLP-based intent classification and entity extraction.
-- Automated Google Calendar event creation with timezone awareness.
-- Timeline logging for auditing and debugging.
+- 🎙️ **Voice Capture** (STT with Whisper) + optional TTS responses  
+- 📬 **Message Normalization** across sources (voice, chat, future email)  
+- 🧠 **NLP Intent & Entity Extraction**  
+- 📅 **Google Calendar Integration** with timezone awareness  
+- 📜 **Timeline Logging** for audit & debugging  
 
-## High-Level Architecture & Data Flow
+---
 
-```
-[User Voice] -> voice-agent -> (text) -> msg-proxy -> orchestrator -> Google Calendar
-                                                 |                     |
-                                                 +----> timeline <-----+
-                                                 +----> msg-proxy (confirmation back to user)
-```
+## 🏗️ High-Level Architecture
 
-1. User speaks; `voice-agent` records audio and transcribes via Whisper.
-2. Transcribed text sent to `msg-proxy` webhook (source=voice).
-3. `msg-proxy` normalizes payload and forwards to `orchestrator`.
-4. `orchestrator` parses intent/entities (schedule meeting) and calls Google Calendar.
-5. Successful event + metadata written to `timeline` and a confirmation message sent back through `msg-proxy`.
-6. Timeline service provides an API surface for querying historical actions.
+```mermaid
+flowchart LR
+    A[User Voice] --> B[voice-agent]
+    B -->|text| C[msg-proxy]
+    C --> D[orchestrator]
+    D --> E[Google Calendar]
+    D --> F[timeline]
+    D --> C
+````
 
-## Repository Structure (Relevant Portions)
+---
+
+## 📂 Repository Structure
 
 ```
 CalenderHandlerModule/
-  scripts/
-    run-all.ps1              # Launch all services in separate PowerShell windows
-    run-orchestrator.ps1     # Launch only orchestrator (for focused dev)
+  scripts/                 # Launch scripts (PowerShell)
   services/
-    orchestrator/
-      main.py                # FastAPI entrypoint
-      agent.py               # Orchestrator logic
-      nlp.py                 # Intent/entity parsing
-      calendar_client.py     # Google Calendar wrapper (token refresh + re-auth)
-      requirements.txt
-    msg-proxy/
-      app.py                 # Normalization + forwarding to orchestrator & timeline
-      requirements.txt
-    timeline/
-      main.py                # Timeline CRUD API
-      requirements.txt
-    voice-agent/
-      server.py              # STT endpoint, forwards text to msg-proxy
-      stt.py / tts.py        # Speech utilities
-      requirements.txt
-  google/
-    credentials.json         # OAuth client secrets (DO NOT COMMIT)
-    token.json               # Generated OAuth access/refresh (DO NOT COMMIT)
-venv311/                     # Python virtual environment (ignored)
-.docs/ or docs/              # Documentation (this file)
+    orchestrator/          # Core intent + calendar logic
+    msg-proxy/             # Normalization + forwarding
+    timeline/              # Timeline CRUD API
+    voice-agent/           # Speech-to-text / text-to-speech
+  google/                  # ⚠️ OAuth secrets (ignored in git)
+  venv311/                 # Python virtualenv (ignored)
+docs/ or .docs/            # Documentation
 ```
 
-## Service Responsibilities
+---
 
-- voice-agent: Accepts audio, performs speech-to-text (Whisper), optional text-to-speech, then POSTs normalized voice content to msg-proxy.
-- msg-proxy: Receives messages from multiple sources, normalizes schema, writes timeline entry (optional) and forwards actionable events to orchestrator.
-- orchestrator: Determines intent (e.g., schedule meeting), extracts datetime/emails/summary, creates calendar events, logs timeline, and routes confirmation.
-- timeline: Persists timeline events (actions, status, metadata) for audit & debugging.
+## 🔧 Service Responsibilities
 
-## Environment & Secrets
+* **voice-agent** → Audio → STT (Whisper) → `msg-proxy`
+* **msg-proxy** → Normalizes & forwards to orchestrator → (optional timeline)
+* **orchestrator** → Intent parsing, entity extraction, Google Calendar calls, confirmation routing
+* **timeline** → Stores all actions & metadata for observability
 
-Environment variables (examples):
+---
 
-- TIMEZONE: IANA timezone (e.g. `Asia/Kolkata`). Used by orchestrator for default datetime interpretation.
-- GOOGLE_CREDENTIALS_PATH: Override path to `credentials.json` (optional).
-- GOOGLE_TOKEN_PATH: Override path to `token.json` (optional).
-- ORCHESTRATOR_URL / TIMELINE_URL / MSG_PROXY_BASE_URL / TIMELINE_BASE_URL: Inter-service URLs (injected by launch scripts).
-- MSG_PROXY_WEBHOOK_URL: Where voice-agent posts transcribed text.
+## 🔑 Environment & Secrets
 
-Sensitive files (should be .gitignored):
+Environment variables:
 
-- `google/credentials.json`
-- `google/token.json`
-- Any `.env` style secret files.
+| Variable                                                   | Purpose                             |
+| ---------------------------------------------------------- | ----------------------------------- |
+| `TIMEZONE`                                                 | IANA timezone (e.g. `Asia/Kolkata`) |
+| `GOOGLE_CREDENTIALS_PATH`                                  | Override for `credentials.json`     |
+| `GOOGLE_TOKEN_PATH`                                        | Override for `token.json`           |
+| `ORCHESTRATOR_URL` / `TIMELINE_URL` / `MSG_PROXY_BASE_URL` | Inter-service URLs                  |
+| `MSG_PROXY_WEBHOOK_URL`                                    | Where `voice-agent` posts text      |
 
-## Installation & Setup
+> ⚠️ **Sensitive files (never commit):**
+>
+> * `google/credentials.json`
+> * `google/token.json`
+> * `.env` or secret files
 
-1. Clone repository.
-2. Create virtual environment (if not present):
-   ```powershell
-   python -m venv venv311
-   .\venv311\Scripts\Activate.ps1
-   ```
-3. (Optional) Pre-install shared libs for speed:
-   ```powershell
-   pip install fastapi uvicorn httpx google-api-python-client google-auth-oauthlib sqlalchemy pydantic torch
-   ```
-4. Place your Google OAuth `credentials.json` under `CalenderHandlerModule/google/`.
+---
 
-## Running All Services
-
-From project root:
+## ⚙️ Installation
 
 ```powershell
-# Activate venv
+# Clone repo
+git clone <your-repo-url>
+cd echoAgentsProject
+
+# Create virtual environment
+python -m venv venv311
 .\venv311\Scripts\Activate.ps1
-# Launch (with optional custom ports)
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+Place your Google OAuth `credentials.json` under `CalenderHandlerModule/google/`.
+
+---
+
+## ▶️ Running Services
+
+### Run All Services
+
+```powershell
+.\venv311\Scripts\Activate.ps1
 .\CalenderHandlerModule\scripts\run-all.ps1 -TimelinePort 9000
 ```
 
-This opens four minimized PowerShell windows (msg-proxy, orchestrator, timeline, voice-agent). Logs indicate dependency install then Uvicorn startup.
+Launches 4 services (msg-proxy, orchestrator, timeline, voice-agent).
 
-### Running a Single Service (Example: Orchestrator)
+### Run a Single Service (Example: Orchestrator)
 
 ```powershell
 .\venv311\Scripts\Activate.ps1
 .\CalenderHandlerModule\scripts\run-orchestrator.ps1 -Port 8002
 ```
 
-### Verifying Services
-
-After startup, test health (assuming default ports):
+### Verify Health
 
 ```powershell
-Invoke-WebRequest http://localhost:8002/docs | Select-Object -ExpandProperty StatusCode
-Invoke-WebRequest http://localhost:8001/docs | Select-Object -ExpandProperty StatusCode
+Invoke-WebRequest http://localhost:8002/docs
+Invoke-WebRequest http://localhost:8001/docs
 ```
 
-Expect `200` responses.
-
-## First-Time Google OAuth Flow
-
-On first orchestrator start (or after token revocation):
-
-1. Browser window opens for consent.
-2. Approve Calendar access.
-3. New `token.json` written automatically.
-   If running headless: console flow prints a URL and code; follow instructions.
-
-If you see error `invalid_grant: Token has been expired or revoked`:
-
-- Delete `token.json`.
-- Restart orchestrator to re-auth.
-
-## Scheduling Flow (Detailed)
-
-1. User voice command: "Schedule a meeting with alice@example.com tomorrow at 3 pm about roadmap".
-2. voice-agent transcribes -> `{ text: "Schedule...", source: "voice" }` POST to msg-proxy.
-3. msg-proxy wraps into normalized action: `{ user_id, text, source, timestamp }` -> orchestrator.
-4. orchestrator:
-   - `nlp.classify_intent` => `schedule_meeting`
-   - `nlp.extract_entities` => emails, datetime string, summary tokens
-   - fallback default time if missing (tomorrow 10:00 local)
-   - uses `calendar_client.create_event`
-5. calendar_client:
-   - Ensures credentials (refresh or re-auth)
-   - Posts event to Google Calendar with timezone fields
-6. orchestrator builds confirmation message, writes timeline entry, posts message back via msg-proxy.
-7. msg-proxy could then deliver to a UI or chat integration (future).
-
-## Timezone Handling
-
-- Orchestrator reads `TIMEZONE` (default UTC if unset).
-- Parsed naive datetimes are localized to that timezone before calendar creation.
-- calendar_client sets `start.timeZone` and `end.timeZone` if a zone name is known.
-
-## Error Handling Highlights
-
-- Expired Google tokens trigger re-auth (automatic fallbacks added in `calendar_client.py`).
-- Missing venv: scripts fall back to global `pip`/`uvicorn` but warn.
-- Service startup dependency install performed idempotently each launch (kept light by already-cached wheels).
-
-## Common Issues & Resolutions
-
-| Symptom                            | Cause                  | Resolution                                         |
-| ---------------------------------- | ---------------------- | -------------------------------------------------- |
-| `Split-Path` error in older script | Fragile path logic     | Updated `run-all.ps1` uses `$PSScriptRoot`         |
-| `invalid_grant` on startup         | Revoked/expired token  | Delete `token.json`, restart, re-consent           |
-| `uvicorn not found`                | Venv not detected      | Activate venv or set `$env:ECHO_VENV` to venv root |
-| STT slow on first run              | Whisper model download | Allow initial download, cached afterward           |
-
-## Extending the System
-
-- Add new input channel: Implement adapter in msg-proxy to accept Slack/email and normalize to internal schema.
-- Additional intents: Expand `nlp.py` classification and entity extraction logic.
-- Persistence: Add database models to timeline (currently minimal) via SQLAlchemy migrations.
-- Frontend: Consume `/timeline` and orchestrator endpoints for a dashboard.
-
-## Security & Hygiene
-
-- Never commit `credentials.json` / `token.json`.
-- Restrict OAuth client to necessary scope only (`calendar`).
-- Consider rotating refresh tokens periodically.
-- Use `.env` + secrets manager in production (instead of inline scripts).
-
-## Testing (Suggested Next Steps)
-
-Add basic tests (future enhancement):
-
-- Unit: nlp intent classification edge cases.
-- Integration: schedule meeting flow using mocked Google API (e.g., `httpretty` or `responses`).
-- Contract: Generate OpenAPI schema and validate against frontend client types.
-
-## TypeScript Client Generation (Optional)
-
-If you add a frontend and want typed clients:
-
-```powershell
-npx openapi-typescript http://localhost:8002/openapi.json -o .\frontend\types\orchestrator.d.ts
-```
-
-(Install Node & openapi-typescript globally or use npx.)
-
-## Roadmap Ideas
-
-- Authentication / user mapping.
-- Natural language rescheduling & cancellation.
-- Multi-language STT support.
-- Meeting notes summarization post-event.
-- WebSocket push notifications.
+Expect `200`.
 
 ---
 
-Maintained by the EchoAgents team. Update this document as services or flows evolve.
+## 🔐 First-Time Google OAuth
+
+1. Start orchestrator → Browser opens for consent
+2. Approve access → `token.json` generated
+3. For headless: copy-paste URL + code into console
+
+If you see `invalid_grant`:
+
+```powershell
+del CalenderHandlerModule\google\token.json
+# Restart orchestrator → re-auth
+```
+
+---
+
+## 📅 Scheduling Flow
+
+1. User says: *“Schedule a meeting with [alice@example.com](mailto:alice@example.com) tomorrow at 3 pm about roadmap”*
+2. `voice-agent` → transcribes → sends to `msg-proxy`
+3. `msg-proxy` → normalized action → orchestrator
+4. `orchestrator`:
+
+   * Intent = `schedule_meeting`
+   * Entities = datetime, emails, summary
+   * Creates Google Calendar event
+   * Logs to timeline + confirmation back to `msg-proxy`
+
+---
+
+## 🌍 Timezone Handling
+
+* Defaults to UTC if `TIMEZONE` not set
+* Localizes naive datetimes before calendar creation
+* Sets `start.timeZone` + `end.timeZone` explicitly
+
+---
+
+## 🐞 Error Handling
+
+* Expired Google tokens → automatic re-auth
+* Missing venv → fallback to global pip/uvicorn
+* Service startup → auto-install lightweight dependencies
+
+---
+
+## 🛠️ Common Issues
+
+| Symptom             | Cause                  | Fix                                     |
+| ------------------- | ---------------------- | --------------------------------------- |
+| `Split-Path` error  | Old script logic       | Updated PowerShell with `$PSScriptRoot` |
+| `invalid_grant`     | Token expired          | Delete `token.json`, restart            |
+| `uvicorn not found` | venv not activated     | Activate venv or set `$env:ECHO_VENV`   |
+| Slow STT            | First Whisper download | Cached after initial run                |
+
+---
+
+## 🚀 Extending
+
+* Add new channel → implement adapter in `msg-proxy`
+* Add intents/entities → extend `nlp.py`
+* Persist timeline → migrate to SQLAlchemy DB
+* Add dashboard → consume `/timeline` & orchestrator APIs
+
+---
+
+## 🔒 Security Best Practices
+
+* ✅ Never commit `credentials.json` or `token.json`
+* ✅ Limit OAuth scope to only `calendar`
+* ✅ Rotate tokens periodically
+* ✅ Use `.env` + secret manager in production
+
+---
+
+## 🧪 Testing (Planned)
+
+* Unit → NLP intent/entity edge cases
+* Integration → Mock Google API with `responses`
+* Contract → Validate OpenAPI schema for clients
+
+---
+
+## 🗺️ Roadmap
+
+* Authentication / user mapping
+* Natural language **rescheduling & cancellation**
+* Multi-language STT support
+* Meeting notes summarization
+* WebSocket push notifications
+
+---
+
+Maintained by **EchoAgents Team** 🛠️
+Update this README as services & flows evolve.
+
+```

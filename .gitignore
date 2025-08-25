@@ -71,5 +71,6 @@ coverage.xml
 *.ipynb
 
 # Remove google credentials
-google/credentials.json
-google/token.json
+**/google/credentials.json
+**/google/token.json
+
