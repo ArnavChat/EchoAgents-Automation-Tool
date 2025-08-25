@@ -1,0 +1,11 @@
+git+https://github.com/openai/whisper.git
+torch
+sounddevice
+numpy
+scipy
+TTS
+simpleaudio
+webrtcvad
+fastapi
+uvicorn
+httpx

@@ -1,0 +1,15 @@
+sounddevice
+numpy==1.26.4
+scipy
+TTS==0.22.0
+simpleaudio
+webrtcvad-wheels>=2.0.11
+git+https://github.com/openai/whisper.git
+torch
+httpx
+uvicorn
+fastapi
+sqlalchemy
+psycopg2
+openapi-typescript
+dotenv

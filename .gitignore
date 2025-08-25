@@ -1,0 +1,75 @@
+# Python virtual environment
+venv310/
+venv311/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.pid
+*.gz
+*.zip
+*.tar
+*.rar
+*.7z
+*.bak
+*.swp
+*.swo
+*.DS_Store
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Docker
+*.env
+docker-compose.override.yml
+
+# Node.js
+node_modules/
+
+# Coverage reports
+.coverage
+coverage.xml
+*.cover
+*.coverage
+
+# Test output
+*.test
+*.spec
+
+# Miscellaneous
+*.sqlite3
+*.db
+*.sql
+*.sqlite
+*.pkl
+*.h5
+*.model
+*.weights
+*.checkpoint
+*.ckpt
+*.onnx
+*.pb
+*.tflite
+*.pt
+*.pth
+*.params
+*.tar.gz
+*.whl
+*.ipynb_checkpoints
+*.ipynb
+
+# Remove google credentials
+google/credentials.json
+google/token.json
