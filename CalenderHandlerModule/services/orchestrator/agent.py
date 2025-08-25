@@ -80,6 +80,13 @@ class Agent:
                 tl = await self._send_and_timeline(user_id, intent, status="failed", message=msg, payload={"text": text, "entities": entities})
                 return {"error": "calendar_create_failed", "details": str(e), **tl}
 
+        elif intent in {"cancel_meeting", "update_meeting"}:
+            # Placeholder simple implementation: acknowledge intent; real impl would search calendar.
+            # For now, respond that feature is in progress.
+            msg = f"Intent '{intent}' recognized but this capability is not yet fully implemented."
+            ack = await self._send_and_timeline(user_id, intent, status="done", message=msg, payload={"text": text, "entities": entities})
+            return {"info": msg, **ack}
+
         # Fallback: use LLM stubbed tools (write timeline + send message)
         prompt = f"Action Text: {text}\nState: {self.state}"
         tool_plan = self.langgraph.call_llm(prompt)

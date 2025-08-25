@@ -37,6 +37,28 @@ docker-compose.override.yml
 
 # Node.js
 node_modules/
+*.tsbuildinfo
+*.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Frontend build outputs
+frontend/dist/
+frontend/.cache/
+frontend/.parcel-cache/
+frontend/coverage/
+frontend/tmp/
+frontend/.turbo/
+frontend/.next/
+frontend/out/
+
+# Frontend env files (already ignoring *.env globally, but add explicit just in case)
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
 
 # Coverage reports
 .coverage

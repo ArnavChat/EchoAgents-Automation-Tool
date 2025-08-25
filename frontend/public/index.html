@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EchoAgents Voice Console</title>
+    <style>
+      :root {
+        --bg: #0b0f17;
+        --bg-alt: #141b27;
+        --panel: rgba(255,255,255,0.04);
+        --panel-border: rgba(255,255,255,0.08);
+        --accent: #6366f1;
+        --accent-glow: 174 58% 61%;
+        --danger: #dc2626;
+        --text: #e2e8f0;
+        --text-dim: #94a3b8;
+        --radius: 14px;
+        --focus: 0 0 0 2px #6366f1aa;
+        font-family: 'Inter', system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin:0; padding:0; color:var(--text); background:radial-gradient(circle at 25% 20%, #1e293b 0%, var(--bg) 60%);
+        -webkit-font-smoothing: antialiased;
+      }
+      .app-shell { max-width:1080px; margin:0 auto; padding:2.5rem 2rem 4rem; }
+      header.hero { text-align:center; margin-bottom:2.5rem; }
+  .gradient-text { background:linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899); -webkit-background-clip:text; background-clip:text; color:transparent; }
+      p.lead { color:var(--text-dim); font-size:1.05rem; max-width:760px; margin:0.75rem auto 0; }
+  .panel { background:var(--panel); border:1px solid var(--panel-border); -webkit-backdrop-filter: blur(22px) saturate(140%); backdrop-filter: blur(22px) saturate(140%); padding:1.5rem 1.75rem 2rem; border-radius:var(--radius); box-shadow:0 4px 24px -4px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,0.02); }
+      .panel + .panel { margin-top:1.5rem; }
+      h2.section { font-size:1rem; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim); font-weight:600; margin:0 0 0.75rem; }
+      button { position:relative; cursor:pointer; font-size:.9rem; font-weight:500; padding:.7rem 1.05rem; border-radius:10px; border:1px solid #334155; background:linear-gradient(180deg,#1e293b,#162132); color:var(--text); transition:.25s; display:inline-flex; align-items:center; gap:.5rem; }
+      button:hover:not(:disabled) { border-color:#475569; background:linear-gradient(180deg,#27364b,#1b2938); }
+      button:active:not(:disabled){ transform:translateY(1px); }
+      button:focus-visible { outline:none; box-shadow:var(--focus); }
+      button.primary { border-color:transparent; background:linear-gradient(90deg,#6366f1,#8b5cf6); box-shadow:0 0 0 1px rgba(255,255,255,0.04),0 4px 14px -2px rgba(99,102,241,.55); }
+      button.primary:hover { filter:brightness(1.08); }
+      button.primary.recording { background:linear-gradient(90deg,#dc2626,#ef4444); box-shadow:0 0 0 1px rgba(255,255,255,0.05),0 4px 14px -2px rgba(239,68,68,.55); }
+      button:disabled { opacity:.55; cursor:not-allowed; }
+      textarea, .code-block { width:100%; background:#121a24; border:1px solid #243040; color:var(--text); border-radius:10px; padding:.9rem 1rem; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.85rem; line-height:1.35; resize:vertical; min-height:110px; }
+      textarea:focus-visible { outline:none; box-shadow:var(--focus); border-color:#475569; }
+      .controls { display:flex; flex-wrap:wrap; gap:.8rem; margin-bottom:.85rem; }
+      .stack { display:flex; flex-direction:column; gap:1.15rem; }
+      .two-col { display:grid; gap:1.5rem; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+      .log-view { max-height:200px; overflow:auto; font-size:.75rem; background:#0f151d; border:1px solid #1e2632; border-radius:10px; padding:.6rem .75rem; }
+      .log-line { padding:.25rem 0; border-bottom:1px dashed rgba(255,255,255,0.06); white-space:pre-wrap; word-break:break-word; }
+      .log-line:last-child { border-bottom:none; }
+      .pill { background:#1e293b; padding:.35rem .65rem; border-radius:999px; font-size:.65rem; letter-spacing:.05em; text-transform:uppercase; color:#94a3b8; }
+      audio { width:100%; margin-top:.75rem; filter:drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
+      footer { margin-top:3rem; font-size:.7rem; text-align:center; color:#64748b; }
+      .fade-in { animation:fade .6s ease; }
+      @keyframes fade { from { opacity:0; transform:translateY(4px);} to { opacity:1; transform:translateY(0);} }
+      .divider { height:1px; background:linear-gradient(90deg,transparent,#1e293b,transparent); margin:1.25rem 0; }
+      .badge-inline { background:#1e2532; color:#94a3b8; padding:.25rem .55rem; border-radius:6px; font-size:.6rem; letter-spacing:.05em; }
+      a { color:#818cf8; text-decoration:none; }
+      a:hover { text-decoration:underline; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="/bundle.js"></script>
+  </body>
+</html>
