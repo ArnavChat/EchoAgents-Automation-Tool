@@ -13,3 +13,8 @@ sqlalchemy
 psycopg2
 openapi-typescript
 dotenv
+plotly 
+scikit-learn 
+statsmodels 
+nbformat
+seaborn
